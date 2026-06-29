@@ -43,52 +43,50 @@ pip install -r requirements.txt
 7. Refine UML so it matches what you actually built.
 
 ## 🖥️ Sample Output
-
-## Sample Output
-
-<!-- ```bash
+(.venv) cinthiaochoa@cinthias-MacBook-Pro ai110-module2show-pawpal-starter % python3 main.py
 🐾 --- PawPal+ Terminal Demo --- 🐾
 
-Generating schedule for Cinthia (Available Time: 120 mins)...
+1) Task pool — insertion order (out of order)
+---------------------------------------------
+  ⬜ Quick treat      Mochi      5 min  [low]
+  ⬜ Morning walk     Mochi     30 min  [high]
+  ⬜ Train commands   Mochi     20 min  [high]
+  ⬜ Brush fur        Luna      15 min  [medium]
+  ⬜ Feeding          Luna      10 min  [high]
 
-🗓️  TODAY'S SCHEDULE:
-========================================
-⏰ [Scheduled] Train commands for Mochi
-   ⏱️  Duration: 25 mins | 🔴 Priority: HIGH
-----------------------------------------
-⏰ [Scheduled] Morning Walk for Mochi
-   ⏱️  Duration: 30 mins | 🔴 Priority: HIGH
-----------------------------------------
-⏰ [Scheduled] Brush Fur for Luna
-   ⏱️  Duration: 15 mins | 🔴 Priority: MEDIUM
-----------------------------------------
-⏰ [Scheduled] Quick Feeding for Luna
-   ⏱️  Duration: 10 mins | 🔴 Priority: LOW
-----------------------------------------
+2) sort_tasks() — by priority, then shortest duration
+-----------------------------------------------------
+  ⬜ Feeding          Luna      10 min  [high]
+  ⬜ Train commands   Mochi     20 min  [high]
+  ⬜ Morning walk     Mochi     30 min  [high]
+  ⬜ Brush fur        Luna      15 min  [medium]
+  ⬜ Quick treat      Mochi      5 min  [low]
 
-🧠 SCHEDULER EXPLANATION:
-========================================
-Daily plan for Cinthia (120 min available):
-  08:00 — Train commands (25 min) [priority: high] for Mochi
-  08:25 — Morning Walk (30 min) [priority: high] for Mochi
-  08:55 — Brush Fur (15 min) [priority: medium] for Luna
-  09:10 — Quick Feeding (10 min) [priority: low] for Luna -->
+3) filter_tasks(active_pets={'Mochi'}) — only Mochi's tasks
+-----------------------------------------------------------
+  ⬜ Quick treat      Mochi      5 min  [low]
+  ⬜ Morning walk     Mochi     30 min  [high]
+  ⬜ Train commands   Mochi     20 min  [high]
 
-## 🧪 Testing PawPal+
+4a) filter_tasks(is_completed=False) — active only (default)
+------------------------------------------------------------
+  ⬜ Quick treat      Mochi      5 min  [low]
+  ⬜ Morning walk     Mochi     30 min  [high]
+  ⬜ Train commands   Mochi     20 min  [high]
+  ⬜ Feeding          Luna      10 min  [high]
 
-```bash
-# Run the full test suite:
-pytest
+4b) filter_tasks(is_completed=True) — completed only
+----------------------------------------------------
+  ✅ Brush fur        Luna      15 min  [medium]
 
-# Run with coverage:
-pytest --cov
-```
-
-Sample test output:
-
-```
-# Paste your pytest output here
-```
+5) Final daily plan
+------------------
+Daily plan for Cinthia (60 min available):
+  08:00 — Feeding (10 min) [priority: high] for Luna
+  08:10 — Train commands (20 min) [priority: high] for Mochi
+  08:30 — Morning walk (30 min) [priority: high] for Mochi
+Skipped:
+  - Quick treat (Mochi): not enough time left (0 min remaining, needs 5 min)
 
 ## 📐 Smarter Scheduling
 
