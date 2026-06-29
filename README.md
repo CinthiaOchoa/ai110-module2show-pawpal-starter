@@ -147,30 +147,53 @@ no pets, overcommitment, and recurrence intervals). Recurrence tests use fixed
 dates for determinism, and each `TestCase` rebuilds fresh objects in `setUp()`
 for isolation.
 
-Run the suite with either runner:
+**Run the tests:**
 
 ```bash
-# Option A — pytest
-pytest
+python -m pytest
+```
 
-# Option B — unittest
+You can also run the same suite through the `unittest` runner:
+
+```bash
 python -m unittest tests.test_pawpal
 ```
 
-Sample output (`pytest`):
+**What the suite covers:**
+
+- **Sorting correctness** — tasks are ordered by priority rank (high → medium →
+  low) and then by shortest duration, and land in the schedule in that order.
+- **Recurrence logic** — `is_due()` and `mark_completed()` use `datetime.timedelta`
+  to compute each task's next due date, so a task completed today is skipped today
+  but correctly reappears once its interval has passed.
+- **Conflict / overcommitment detection** — when high-priority work exceeds the
+  owner's `available_time`, the scheduler flags a warning with the exact overage
+  and skips over-budget tasks with a clear reason, without crashing.
+
+**Successful test run:**
 
 ```
-...............                                                          [100%]
-15 passed in 0.01s
+$ python -m pytest
+============================= test session starts ==============================
+collected 15 items
+
+tests/test_pawpal.py ...............                                      [100%]
+
+============================== 15 passed in 0.01s ==============================
 ```
 
-| Area | What's verified |
-|------|-----------------|
-| Sorting & building | Priority rank → shortest duration ordering, correct start times |
-| Filtering | By active pet and by completion status |
-| Recurrence | `is_due()` intervals via `timedelta`; completed tasks reopen when due |
-| Overcommitment | Warning with the exact overage; over-budget tasks skipped with a reason |
-| Edge cases | Empty task list and owner-with-no-pets return safely (no crash) |
+### Confidence Level
+
+**Reliability: ⭐⭐⭐⭐⭐ (5/5)**
+
+All **15 tests pass (100% pass rate)**, and the suite goes beyond happy-path
+checks to cover the edge cases most likely to break a scheduler: empty task
+lists, owners with no pets, recurrence boundaries (using deterministic fixed
+dates), and budget overruns. Each test asserts on specific values — exact
+orderings, dates, minute overages, and skip reasons — so a subtle regression
+fails loudly rather than slipping through. Combined with per-test isolation via
+`setUp()`, this gives high confidence that the core scheduling logic behaves
+correctly and stays correct as the code evolves.
 
 ## 📸 Demo Walkthrough
 
