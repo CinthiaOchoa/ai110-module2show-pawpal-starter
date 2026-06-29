@@ -44,15 +44,35 @@ pip install -r requirements.txt
 
 ## 🖥️ Sample Output
 
-Paste a sample of your app's CLI or Streamlit output here so a reader can see what a generated plan looks like:
+## Sample Output
 
-```
-# e.g.:
-# Daily plan for Biscuit (Golden Retriever):
-#   08:00 — Morning walk (30 min) [priority: high]
-#   09:00 — Feeding (10 min) [priority: high]
-#   ...
-```
+<!-- ```bash
+🐾 --- PawPal+ Terminal Demo --- 🐾
+
+Generating schedule for Cinthia (Available Time: 120 mins)...
+
+🗓️  TODAY'S SCHEDULE:
+========================================
+⏰ [Scheduled] Train commands for Mochi
+   ⏱️  Duration: 25 mins | 🔴 Priority: HIGH
+----------------------------------------
+⏰ [Scheduled] Morning Walk for Mochi
+   ⏱️  Duration: 30 mins | 🔴 Priority: HIGH
+----------------------------------------
+⏰ [Scheduled] Brush Fur for Luna
+   ⏱️  Duration: 15 mins | 🔴 Priority: MEDIUM
+----------------------------------------
+⏰ [Scheduled] Quick Feeding for Luna
+   ⏱️  Duration: 10 mins | 🔴 Priority: LOW
+----------------------------------------
+
+🧠 SCHEDULER EXPLANATION:
+========================================
+Daily plan for Cinthia (120 min available):
+  08:00 — Train commands (25 min) [priority: high] for Mochi
+  08:25 — Morning Walk (30 min) [priority: high] for Mochi
+  08:55 — Brush Fur (15 min) [priority: medium] for Luna
+  09:10 — Quick Feeding (10 min) [priority: low] for Luna -->
 
 ## 🧪 Testing PawPal+
 
