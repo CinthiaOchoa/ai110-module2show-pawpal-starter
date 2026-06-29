@@ -138,6 +138,40 @@ you have only 60 min — over budget by 20 min"*) in `warnings` and surfaces it 
 `explain_plan()`. The plan is still produced — the program flags the conflict
 rather than failing.
 
+## 🧪 Testing PawPal+
+
+The logic layer is covered by **15 unit tests** in [`tests/test_pawpal.py`](tests/test_pawpal.py),
+written with Python's `unittest` framework. They verify the happy paths
+(sorting, building) and the critical edge cases (empty task lists, owners with
+no pets, overcommitment, and recurrence intervals). Recurrence tests use fixed
+dates for determinism, and each `TestCase` rebuilds fresh objects in `setUp()`
+for isolation.
+
+Run the suite with either runner:
+
+```bash
+# Option A — pytest
+pytest
+
+# Option B — unittest
+python -m unittest tests.test_pawpal
+```
+
+Sample output (`pytest`):
+
+```
+...............                                                          [100%]
+15 passed in 0.01s
+```
+
+| Area | What's verified |
+|------|-----------------|
+| Sorting & building | Priority rank → shortest duration ordering, correct start times |
+| Filtering | By active pet and by completion status |
+| Recurrence | `is_due()` intervals via `timedelta`; completed tasks reopen when due |
+| Overcommitment | Warning with the exact overage; over-budget tasks skipped with a reason |
+| Edge cases | Empty task list and owner-with-no-pets return safely (no crash) |
+
 ## 📸 Demo Walkthrough
 
 Describe your app in numbered steps so a reader can follow along without watching a video:
