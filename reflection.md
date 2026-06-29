@@ -46,13 +46,22 @@ I decided **time was the hardest constraint** because it is the real-world bottl
 
 **a. How you used AI**
 
-- How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?
-- What kinds of prompts or questions were most helpful?
+I used the AI coding assistant across the entire lifecycle — design brainstorming, implementation, testing, and documentation — but two uses stood out as especially effective:
+
+- **Multi-file synchronized edits.** The assistant was most valuable when a single feature touched several files at once. For example, automating recurring tasks required adding `next_due`/`refresh()` logic to `pawpal_system.py`, then wiring `mark_completed(day=date.today())` and `build_schedule(day=...)` into `app.py` — all in one coordinated pass. Connecting the logic layer to the Streamlit UI this way kept the two files consistent and avoided the drift that happens when you edit them separately.
+- **Translating requirements into concrete test plans.** Vague goals like "test the edge cases" became a structured plan — happy-path sorting, empty/no-pet inputs, overcommitment with an exact overage, and recurrence boundaries using fixed dates. Turning fuzzy intent into specific, named test functions with deterministic assertions was a real accelerator.
+
+The most helpful prompts were **specific and context-rich**: naming the exact method, the file, and the expected behavior produced far better results than open-ended requests. Asking the assistant to *explain its reasoning before writing code* (e.g. the conceptual algorithm plan before Phase 5) also caught design issues early.
+
+One workflow choice that paid off was **keeping isolated chat sessions for each phase** — Core Implementation, Testing Suite Generation, and Streamlit UI Integration each had their own thread. This kept context clean and focused, avoided polluting prompts with unrelated history, and — most importantly — prevented stale or competing code versions from bleeding between concerns (e.g. an early `task_pool` design contaminating the final `Owner.get_all_tasks()` approach). Each session stayed anchored to one clear objective.
 
 **b. Judgment and verification**
 
-- Describe one moment where you did not accept an AI suggestion as-is.
-- How did you evaluate or verify what the AI suggested?
+The clearest example of not accepting a suggestion as-is was the **`sort_tasks()` refactor**. During the "Evaluate and Refine" step, the assistant proposed extracting the multi-key sort lambda into a separate `_sort_key()` helper method — arguing it would be more testable and self-documenting.
+
+I **rejected the extraction** and instead kept the logic inline with a clear explanatory comment. My reasoning: in a lightweight module, pulling a one-line key function into its own method is *over-abstraction* — it adds indirection and a second place to look for what is fundamentally a simple sort. A well-placed comment explaining the priority-negation trick (so it sorts descending while duration stays ascending) achieves the same readability without the structural overhead.
+
+I verified decisions throughout by **running the test suite after every change** (15 passing tests) and by **driving the Streamlit app end-to-end** to confirm behavior — for example, watching the overcommitment warning fire when 70 minutes of high-priority work hit a 60-minute budget. AI suggestions were treated as drafts to evaluate, not answers to accept blindly.
 
 ---
 
@@ -60,13 +69,21 @@ I decided **time was the hardest constraint** because it is the real-world bottl
 
 **a. What you tested**
 
-- What behaviors did you test?
-- Why were these tests important?
+I built a suite of **15 unit tests** (`tests/test_pawpal.py`, using Python's `unittest` framework) covering the core algorithmic behaviors:
+
+- **Sorting correctness** — tasks ordered by priority rank, then shortest duration, and placed into the schedule in that order.
+- **Filtering** — by active pet and by completion status (active-only, completed-only, or both).
+- **Recurrence logic** — `is_due()` and `mark_completed()` correctly compute the next due date with `timedelta`, so a task completed today is skipped today but reappears once its interval passes.
+- **Conflict / overcommitment** — a warning fires with the *exact* overage when high-priority work exceeds the budget, and over-budget tasks are skipped with a clear reason.
+- **Edge cases** — empty task lists and owners with no pets return safely instead of crashing.
+
+These tests mattered because the scheduler is the heart of the app, and its behavior is easy to break subtly. Asserting on *specific values* — exact orderings, dates, minute overages, and skip reasons — means a quiet regression fails loudly rather than slipping through. Recurrence tests use **fixed dates** for determinism, and each `TestCase` rebuilds fresh objects in `setUp()` so mutations never leak between tests.
 
 **b. Confidence**
 
-- How confident are you that your scheduler works correctly?
-- What edge cases would you test next if you had more time?
+I am highly confident the scheduling **logic layer** works correctly: all 15 tests pass, they cover both happy paths and the edge cases most likely to fail, and I verified the full flow interactively in the Streamlit app. The one honest caveat is that the UI itself (`app.py`) is exercised through manual/driven verification rather than automated UI tests, so my confidence is strongest for the underlying engine.
+
+If I had more time, I would add tests for: tie-breaking when two tasks share a priority *and* duration; monthly recurrence across month boundaries (e.g. completing on Jan 31); a zero-available-time owner; and behavior when many pets each contribute tasks that compete for the same budget.
 
 ---
 
@@ -74,12 +91,12 @@ I decided **time was the hardest constraint** because it is the real-world bottl
 
 **a. What went well**
 
-- What part of this project are you most satisfied with?
+I am most satisfied with the **clean separation between the logic layer and the UI**. Because `pawpal_system.py` is pure, testable Python with no Streamlit dependency, I could test the scheduler thoroughly in isolation and then connect it to `app.py` with confidence. The recurrence engine — completing a task today and watching it correctly reappear tomorrow — and the overcommitment detection that *warns instead of crashing* are the features I'm proudest of, because they turn a basic to-do list into something that genuinely reasons about a busy owner's day.
 
 **b. What you would improve**
 
-- If you had another iteration, what would you improve or redesign?
+In another iteration I would: make **preferences an actual scheduling input** (they're currently stored but not used to influence the plan); add support for **fixed-time commitments** (like a 2:00 PM vet visit) with real overlap detection; let the user **choose a sorting strategy** (e.g. value-density to maximize priority-per-minute); and add **automated UI tests** so the Streamlit layer is covered as rigorously as the logic layer.
 
 **c. Key takeaway**
 
-- What is one important thing you learned about designing systems or working with AI on this project?
+The biggest lesson was understanding the human engineer's role as the **lead architect**. The AI assistant is excellent at producing boilerplate, math logic, and well-structured first drafts — it wrote correct sorting keys, `timedelta` recurrence math, and test scaffolding quickly. But it does not own the *design*. It was my job to enforce the design boundaries (keeping the logic layer free of UI code), to resist over-abstraction (rejecting the `_sort_key` extraction), to maintain a clean and consistent structure across files, and to insist on readability and meaningful tests. AI accelerates the *how*; the engineer must still own the *what* and the *why*. The best results came from treating the assistant as a fast, knowledgeable collaborator whose output I always reviewed, verified, and shaped — never as an autopilot.

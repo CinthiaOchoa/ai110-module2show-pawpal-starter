@@ -126,31 +126,41 @@ if owner.pets:
             )
         )
 
-    # get_all_tasks() returns the real Task objects (references), so calling
-    # task.mark_completed() below mutates the object stored in session_state.
-    all_tasks = owner.get_all_tasks()
-    if all_tasks:
-        st.write("Current task pool:")
-        for i, task in enumerate(all_tasks):
+    # Active tasks are pulled via sort_tasks() so they render in scheduling
+    # order — highest priority first, then shortest duration. These are the real
+    # Task objects (references), so mark_completed() mutates session_state state.
+    active_tasks = scheduler.sort_tasks()
+    completed_tasks = scheduler.filter_tasks(is_completed=True)
+
+    if not owner.get_all_tasks():
+        st.info("No tasks yet. Add one above.")
+    else:
+        st.markdown("**Active tasks** (ordered by priority, then shortest first)")
+        if not active_tasks:
+            st.caption("All tasks are completed. 🎉")
+        for i, task in enumerate(active_tasks):
             col_info, col_action = st.columns([4, 1])
             with col_info:
-                status = "✅" if task.is_completed else "⬜"
                 st.write(
-                    f"{status} **{task.title}** ({task.pet_name}) — "
-                    f"{task.duration_minutes} min · {task.priority} · {task.frequency}"
+                    f"⬜ **{task.title}** ({task.pet_name}) — "
+                    f"{task.duration_minutes} min · `{task.priority}` · {task.frequency}"
                 )
             with col_action:
-                if task.is_completed:
-                    st.caption("Done")
-                # A unique key per task is required so Streamlit can tell the
-                # buttons apart across reruns.
-                elif st.button("Mark complete", key=f"complete_{i}"):
+                # A unique key per task lets Streamlit tell the buttons apart.
+                if st.button("Mark complete", key=f"complete_{i}"):
                     # Record today's date so recurrence (next_due) is computed;
                     # the task reopens automatically once that date arrives.
                     task.mark_completed(day=date.today())
                     st.rerun()              # rerun so the UI reflects it instantly
-    else:
-        st.info("No tasks yet. Add one above.")
+
+        # Completed tasks shown separately so the active list stays focused.
+        if completed_tasks:
+            with st.expander(f"✅ Completed today ({len(completed_tasks)})"):
+                for task in completed_tasks:
+                    st.write(
+                        f"✅ {task.title} ({task.pet_name}) — "
+                        f"{task.duration_minutes} min · {task.frequency}"
+                    )
 else:
     st.info("Add a pet before adding tasks.")
 
@@ -181,10 +191,29 @@ if generate:
         # and any completed-but-now-due tasks are reopened.
         scheduler.build_schedule(day=date.today())
 
+        # Conflict / overcommitment alerts: the scheduler flags when the
+        # high-priority workload exceeds the available time. Surface each as a
+        # clean st.warning() banner (the message includes the exact overage).
+        for warning in scheduler.warnings:
+            st.warning(f"⚠️ {warning}")
+
         st.markdown("### Daily plan")
 
         # Visual timeline / table of scheduled tasks.
         if scheduler.daily_schedule:
+            used = sum(item.task.duration_minutes for item in scheduler.daily_schedule)
+
+            # Metric cards summarize the plan at a glance.
+            m1, m2, m3 = st.columns(3)
+            m1.metric("Tasks scheduled", len(scheduler.daily_schedule))
+            m2.metric(
+                "Time used",
+                f"{used} min",
+                delta=f"{owner.available_time - used} min free",
+                delta_color="normal",
+            )
+            m3.metric("Tasks skipped", len(scheduler.skipped))
+
             rows = [
                 {
                     "Time": Scheduler._format_time(item.start_minute),
@@ -198,7 +227,6 @@ if generate:
             ]
             st.table(rows)
 
-            used = sum(item.task.duration_minutes for item in scheduler.daily_schedule)
             st.success(
                 f"Scheduled {len(scheduler.daily_schedule)} task(s) using "
                 f"{used} of {owner.available_time} available minutes."

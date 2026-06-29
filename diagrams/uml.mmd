@@ -1,6 +1,5 @@
 classDiagram
-    %% PawPal+ class diagram
-    %% Keep this file updated so it matches your final implementation.
+    %% PawPal+ class diagram — matches the final implementation in pawpal_system.py
 
     class Task {
         +str title
@@ -9,7 +8,11 @@ classDiagram
         +str pet_name
         +str frequency
         +bool is_completed
-        +mark_completed() None
+        +date last_completed
+        +date next_due
+        +mark_completed(day: date) None
+        +is_due(day: date) bool
+        +refresh(day: date) None
     }
 
     class Pet {
@@ -40,15 +43,18 @@ classDiagram
         +Owner owner
         +list~ScheduledTask~ daily_schedule
         +list~tuple~ skipped
+        +list~str~ warnings
         +int day_start_minute
-        +filter_tasks() list~Task~
-        +sort_tasks() list~Task~
-        +build_schedule() list~ScheduledTask~
+        +filter_tasks(day: date, active_pets: set, is_completed: bool) list~Task~
+        +sort_tasks(day: date, active_pets: set) list~Task~
+        +build_schedule(day: date, active_pets: set) list~ScheduledTask~
         +explain_plan() str
+        -_check_overcommitment(eligible: list~Task~) None
+        -_format_time(minute: int) str
     }
 
     Owner "1" --> "*" Pet : owns
     Pet "1" --> "*" Task : has
-    Scheduler --> Owner : schedules for
-    Scheduler o-- ScheduledTask : allocates
-    ScheduledTask --> Task : wraps
+    Scheduler --> "1" Owner : schedules for
+    Scheduler o-- "*" ScheduledTask : allocates
+    ScheduledTask --> "1" Task : wraps
