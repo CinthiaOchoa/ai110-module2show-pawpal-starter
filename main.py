@@ -33,11 +33,14 @@ def main():
 
     # 2. Add tasks OUT OF ORDER (mixed priorities and durations) so the sort has
     #    real work to do. add_task() stamps each task with its pet's name.
+    #    NOTE: the high-priority tasks below total 80 min (30 + 20 + 30) which
+    #    deliberately exceeds the owner's 60-min budget to trigger the
+    #    overcommitment warning.
     mochi.add_task(Task("Quick treat", duration_minutes=5, priority="low"))
     mochi.add_task(Task("Morning walk", duration_minutes=30, priority="high"))
     luna.add_task(Task("Brush fur", duration_minutes=15, priority="medium"))
     mochi.add_task(Task("Train commands", duration_minutes=20, priority="high"))
-    luna.add_task(Task("Feeding", duration_minutes=10, priority="high"))
+    luna.add_task(Task("Vet checkup", duration_minutes=30, priority="high"))
 
     scheduler = Scheduler(owner)
 
@@ -61,7 +64,15 @@ def main():
 
     # --- Build and explain the final plan ---
     scheduler.build_schedule()
-    print("\n5) Final daily plan")
+
+    # --- CONFLICT / OVERCOMMITMENT detection ---
+    if scheduler.warnings:
+        print("\n5) Conflict / overcommitment check")
+        print("-" * 33)
+        for warning in scheduler.warnings:
+            print(f"  ⚠️  {warning}")
+
+    print("\n6) Final daily plan")
     print("-" * 18)
     print(scheduler.explain_plan())
 

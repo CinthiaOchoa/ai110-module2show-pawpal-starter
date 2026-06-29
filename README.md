@@ -90,14 +90,53 @@ Skipped:
 
 ## 📐 Smarter Scheduling
 
-> Fill in once you've implemented scheduling logic.
+PawPal+ goes beyond a flat to-do list. The `Scheduler` and `Task` classes work
+together to decide **what** to do today, in **what order**, and **how much**
+fits — then explain the result. The four algorithmic features below power that.
 
-| Feature | Method(s) | Notes |
-|---------|-----------|-------|
-| Task sorting | | e.g., by priority, duration |
-| Filtering | | e.g., skip tasks if time runs out |
-| Conflict handling | | e.g., overlapping time slots |
-| Recurring tasks | | e.g., daily vs. weekly |
+| Feature | Method(s) | What it does |
+|---------|-----------|--------------|
+| Sorting behavior | `Scheduler.sort_tasks()` | Orders tasks by priority rank, then shortest duration |
+| Filtering behavior | `Scheduler.filter_tasks()` | Selects tasks by active pet, recurrence, and completion status |
+| Recurring task logic | `Task.is_due()`, `Task.mark_completed()` | Schedules the next occurrence using frequency intervals |
+| Conflict & overcommitment detection | `Scheduler.build_schedule()` | Flags (without crashing) when high-priority work exceeds the time budget |
+
+### 1. Sorting behavior — `Scheduler.sort_tasks()`
+
+Tasks are ordered so the most important care happens first. The sort key ranks
+by **priority** (`high` → `medium` → `low`, via the `PRIORITY_RANK` map) and
+breaks ties by **shortest duration**, so quick high-value tasks are placed
+before long ones. Priority is negated in the key so it sorts descending while
+duration still sorts ascending in a single pass; an unknown priority falls back
+to `0` and sorts last instead of raising an error.
+
+### 2. Filtering behavior — `Scheduler.filter_tasks()`
+
+Returns a fresh list of eligible tasks (never mutating the original pool) using
+three independent, optional filters:
+
+- **Active pets** — limit the plan to specific pets by name (`active_pets={"Mochi"}`).
+- **Recurrence** — when a `day` is given, keep only tasks that are due that day.
+- **Completion status** — `is_completed=False` (default) keeps active tasks,
+  `True` keeps completed ones, and `None` keeps both.
+
+### 3. Recurring task logic — `Task.is_due()` and `Task.mark_completed()`
+
+Each task has a `frequency` (`daily`, `weekly`, `monthly`) mapped to a day
+interval (`1`, `7`, `30`). When `mark_completed(day)` is called, it records the
+completion date and uses `datetime.timedelta` to compute the task's `next_due`
+date. `is_due(day)` then returns `True` once that date arrives. A completed
+recurring task automatically reopens for its next occurrence — so a daily
+feeding done today reappears on tomorrow's plan.
+
+### 4. Conflict & overcommitment detection — `Scheduler.build_schedule()`
+
+As it greedily packs tasks into the owner's `available_time`, the scheduler
+checks whether the **high-priority workload alone** exceeds the budget. If it
+does, it records a friendly warning (e.g. *"High-priority tasks need 80 min but
+you have only 60 min — over budget by 20 min"*) in `warnings` and surfaces it in
+`explain_plan()`. The plan is still produced — the program flags the conflict
+rather than failing.
 
 ## 📸 Demo Walkthrough
 
